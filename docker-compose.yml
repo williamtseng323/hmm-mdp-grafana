@@ -1,0 +1,38 @@
+# Usage:
+# 1) Tunnel (local port must match prometheus/prometheus.yml targets), e.g.:
+#    ssh -N -L 9102:127.0.0.1:9101 ec2-user@<instance> -i ~/.ssh/key.pem
+# 2) docker compose up -d
+# 3) Prometheus http://127.0.0.1:9090  Grafana http://127.0.0.1:3000 (admin/admin)
+#
+# Remote MDP metrics stay on instance :9101 unless HMM_METRICS_PORT overrides MDP.
+services:
+  prometheus:
+    image: prom/prometheus:v2.53.4
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_HTTP_PORT: "3000"
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
