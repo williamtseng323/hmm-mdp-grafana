@@ -1,10 +1,11 @@
 # Usage:
-# 1) Tunnel (local port must match prometheus/prometheus.yml targets), e.g.:
-#    ssh -N -L 9102:127.0.0.1:9101 ec2-user@<instance> -i ~/.ssh/key.pem
+# 1) Multiplex SSH forwards (19101→9101 … 19105→9105). Prefer:
+#      ./scripts/tunnel-aws-metrics.sh   # requires AWS_SSH_HOST
+#    Ports must match prometheus/prometheus.yml (host.docker.internal:19101–19105).
 # 2) docker compose up -d
 # 3) Prometheus http://127.0.0.1:9090  Grafana http://127.0.0.1:3000 (admin/admin)
 #
-# Remote MDP metrics stay on instance :9101 unless HMM_METRICS_PORT overrides MDP.
+# See README.md — Grafana reads Prometheus HTTP scrapes (not a browser WebSocket to EC2).
 services:
   prometheus:
     image: prom/prometheus:v2.53.4
